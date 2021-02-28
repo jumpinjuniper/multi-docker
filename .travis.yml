@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t xlabshareddocker/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true xlabshareddocker/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t xlabshareddocker/multi-client ./client
+  - docker build -t xlabshareddocker/multi-nginx ./nginx
+  - docker build -t xlabshareddocker/multi-server ./server
+  - docker build -t xlabshareddocker/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password_stdin
+  # Take those images and push them to docker hub
+  - docker push xlabshareddocker/multi-client
+  - docker push xlabshareddocker/multi-nginx
+  - docker push xlabshareddocker/multi-server
+  - docker push xlabshareddocker/multi-woker
